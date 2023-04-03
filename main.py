@@ -29,30 +29,13 @@ algo_df = precovid_df[['datetime','nitrate_mg_per_liter']]
 algo_df['datetime'] = pd.to_datetime(algo_df['datetime'])
 algo_df['date_delta'] = (algo_df['datetime'] - algo_df['datetime'].min())  / np.timedelta64(1,'D')
 
-algo_df_alltime = algo_df.drop(columns=['datetime'])
-algo_df_alltime.dropna(inplace=True)
-
 algo_df_summer_2020 = algo_df[(algo_df['datetime']>'2020-06-01') & (algo_df['datetime']<'2020-09-01')]
 algo_df_summer_2020 = algo_df_summer_2020.drop(columns=['datetime'])
 algo_df_summer_2020.dropna(inplace=True)
 
 # Tune the number of neighbors and contamination
 knn = KNN(n_neighbors=20, contamination=0.01, n_jobs=-1)
-
-## All time data
-# Fit the data
-knn.fit(algo_df_alltime)
-probs = knn.predict_proba(algo_df_alltime)
-# Use 55% threshold for filtering
-is_outlier = probs[:, 1] > 0.55
-# Isolate the outliers
-outliers = algo_df_alltime[is_outlier]
-len(outliers)
-
-# We're finding 36 outliers for all time data
-
-
-# Let's find outliers for 2020, then for all seasons in 2020
+# Let's find outliers in summer of 2020
 knn.fit(algo_df_summer_2020)
 probs = knn.predict_proba(algo_df_summer_2020)
 # Use 55% threshold for filtering
@@ -61,18 +44,6 @@ is_outlier = probs[:, 1] > 0.55
 outliers = algo_df_summer_2020[is_outlier]
 len(outliers)
 
-
-
-## 2020 summer data
-algo_df
-# Fit the data
-knn.fit(algo_df)
-probs = knn.predict_proba(algo_df)
-# Use 55% threshold for filtering
-is_outlier = probs[:, 1] > 0.55
-# Isolate the outliers
-outliers = algo_df[is_outlier]
-len(outliers)
 
 
 

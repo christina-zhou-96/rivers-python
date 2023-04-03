@@ -21,7 +21,7 @@ summary_df = daily_df.describe()
 
 
 chlorophyll_df = daily_df['chlorophyll_mg_per_liter'].copy()
-chlorophyll_df = chlorophyll_df['chlorophyll_mg_per_liter'].dropna()
+chlorophyll_df = chlorophyll_df.dropna()
 
 chlorophyll_df = chlorophyll_df.reset_index()
 chlorophyll_df.plot()
@@ -38,3 +38,30 @@ plt.show()
 # Let's go with nitrate, which does.
 
 plt.hist(df['nitrate_mg_per_liter'])
+
+# In order to get one observation per day, I grouped by averages,
+# but I wonder if that was the right choice (particularly for anomaly detection.)
+
+sns.lineplot(x='datetime',y='nitrate_mg_per_liter',data=df)
+
+plt.boxplot(monthly_df['nitrate_mg_per_liter'])
+plt.show()
+
+# Boxplot isn't showing. Nitrate readings drop off in 2020, remove 2020 readings
+precovid_df = df[df['datetime']<'2020']
+
+plt.boxplot(precovid_df['nitrate_mg_per_liter'])
+plt.show()
+
+sns.boxplot(precovid_df['nitrate_mg_per_liter'])
+
+# Facetplot 1 boxplot for each year
+
+# 4 boxplots per season, dodge bars for each year/year by hue
+
+
+
+
+
+
+

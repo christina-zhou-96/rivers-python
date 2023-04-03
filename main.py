@@ -55,9 +55,51 @@ plt.show()
 
 sns.boxplot(precovid_df['nitrate_mg_per_liter'])
 
-# Facetplot 1 boxplot for each year
+### KNNs
 
-# 4 boxplots per season, dodge bars for each year/year by hue
+from pyod.pyod.models.knn import KNN # Strange import issue, so I had to go down two subdirectories
+import sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+import numpy as np
+
+algo_df = precovid_df[['datetime','nitrate_mg_per_liter']]
+
+algo_df['datetime'] = pd.to_datetime(algo_df['datetime'])
+algo_df['date_delta'] = (algo_df['datetime'] - algo_df['datetime'].min())  / np.timedelta64(1,'D')
+algo_df.drop(columns=['datetime'],inplace=True)
+algo_df.dropna(inplace=True)
+
+
+# Tune the number of neighbors and contamination
+knn = KNN(n_neighbors=20, contamination=0.01, n_jobs=-1)
+
+# Fit the data
+knn.fit(algo_df)
+
+probs = knn.predict_proba(males)
+# Use 55% threshold for filtering
+is_outlier = probs[:, 1] > 0.55
+# Isolate the outliers
+outliers = males[is_outlier]
+len(outliers)
+
+
+
+
+
+# Split the data into features (X) and target (y)
+X = algo_df.drop('nitrate_mg_per_liter', axis=1)
+y = algo_df['nitrate_mg_per_liter']
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+# Scale the features using StandardScaler
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
 
 
 

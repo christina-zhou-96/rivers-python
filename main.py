@@ -38,7 +38,7 @@ knn_distances = pd.DataFrame(knn_distances['knn_score'])
 
 algo_df_with_score = algo_df.join(knn_distances)
 
-knn_top_anomalies = algo_df.nlargest(20, 'knn_score')
+knn_top_anomalies = algo_df_with_score.nlargest(20, 'knn_score')
 
 #### Try the above again but this time scale the dataset
 
@@ -64,11 +64,9 @@ knn_top_anomalies2 = scaled_df.nlargest(20, 'knn_score')
 
 # Scaling and unscaled generates different results
 
+final_algo_df_with_score = algo_df_with_score.join(scaled_df,rsuffix='_scaled')
 
+final_algo_df_with_score.sort_values('knn_score_scaled',ascending=False,inplace=True)
 
-
-
-
-
-
-
+final_algo_df_with_score['knn_score_rank'] = final_algo_df_with_score['knn_score'].rank(pct=True) * 100
+final_algo_df_with_score['knn_score_scaled_rank'] = final_algo_df_with_score['knn_score_scaled'].rank(pct=True) * 100

@@ -15,12 +15,13 @@ df.drop(columns=['discharge_per_second'],inplace=True)
 
 precovid_df = df[df['datetime']<'2021']
 
-algo_df = precovid_df[['temp_of_water_celsius','nitrate_mg_per_liter']]
+algo_df = precovid_df[['datetime','temp_of_water_celsius','nitrate_mg_per_liter']]
 algo_df.dropna(inplace=True)
-algo_df.reset_index(drop=True,inplace=True)
+algo_df.set_index('datetime', inplace=True)
 
 ### Multivariate: water against nitrate
-# The original tutorial is a little different from what I am doing now
+# This follow concepts from the Introduction to Anomaly Detection tutorial in R
+# Some of the concepts had a one to one correspondence in Python, and others didn't
 
 from sklearn.neighbors import NearestNeighbors
 
@@ -36,6 +37,7 @@ knn_distances = pd.DataFrame(knn_distances)
 knn_distances['knn_score'] = knn_distances.mean(axis=1)
 knn_distances = pd.DataFrame(knn_distances['knn_score'])
 
+algo_df.reset_index(drop=False,inplace=True)
 algo_df_with_score = algo_df.join(knn_distances)
 
 knn_top_anomalies = algo_df_with_score.nlargest(20, 'knn_score')
@@ -44,6 +46,7 @@ knn_top_anomalies = algo_df_with_score.nlargest(20, 'knn_score')
 
 from sklearn.preprocessing import scale
 
+algo_df.set_index('datetime',inplace=True)
 scaled_df = pd.DataFrame(scale(algo_df))
 
 neigh2 = NearestNeighbors(n_neighbors=20)
@@ -62,7 +65,7 @@ scaled_df = scaled_df.join(knn_distances2)
 
 knn_top_anomalies2 = scaled_df.nlargest(20, 'knn_score')
 
-# Scaling and unscaled generates different results
+### Scaling and unscaled generates different results
 
 final_algo_df_with_score = algo_df_with_score.join(scaled_df,rsuffix='_scaled')
 
@@ -70,3 +73,5 @@ final_algo_df_with_score.sort_values('knn_score_scaled',ascending=False,inplace=
 
 final_algo_df_with_score['knn_score_rank'] = final_algo_df_with_score['knn_score'].rank(pct=True) * 100
 final_algo_df_with_score['knn_score_scaled_rank'] = final_algo_df_with_score['knn_score_scaled'].rank(pct=True) * 100
+
+# PUBLISH FINAL ALGO DF WITH SCORE

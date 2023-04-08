@@ -1,3 +1,4 @@
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -72,9 +73,6 @@ final_algo_df_with_score = algo_df_with_score.join(scaled_df,rsuffix='_scaled')
 final_algo_df_with_score['knn_score_rank'] = final_algo_df_with_score['knn_score'].rank(pct=True) * 100
 final_algo_df_with_score['knn_score_scaled_rank'] = final_algo_df_with_score['knn_score_scaled'].rank(pct=True) * 100
 
-# final_algo_df_with_score.to_excel(r"C:\Users\chris\OneDrive\Documents\python_rivers.xlsx")
-# PUBLISH FINAL ALGO DF WITH SCORE
-
 ### LOF
 from pyod.pyod.models.lof import LOF
 
@@ -115,23 +113,4 @@ final_algo_df_with_score = final_algo_df_with_score.join(lof_final)
 
 final_algo_df_with_score.to_excel(r"C:\Users\chris\OneDrive\Documents\python_rivers 04-07-12 1006am.xlsx")
 
-
-
-### DBSCAN
-from sklearn.cluster import DBSCAN
-
-db = DBSCAN(eps = .14, min_samples=10).fit(algo_scaled_df)
-labels = db.labels_
-
-labels_df = pd.DataFrame(labels)
-labels_df[labels_df[0]==-1]
-
-cores = db.core_sample_indices_
-
-# Number of clusters in labels, ignoring noise if present.
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-n_noise_ = list(labels).count(-1)
-
-print("Estimated number of clusters: %d" % n_clusters_)
-print("Estimated number of noise points: %d" % n_noise_)
 

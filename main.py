@@ -1,4 +1,3 @@
-
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -24,54 +23,35 @@ algo_df.set_index('datetime', inplace=True)
 # This follow concepts from the Introduction to Anomaly Detection tutorial in R
 # Some of the concepts had a one to one correspondence in Python, and others didn't
 
+# Let's build a KNN score for each point by taking the average distance from all its 20 neighbors
+
 from sklearn.neighbors import NearestNeighbors
+from sklearn.preprocessing import scale
+
+scaled_df = pd.DataFrame(scale(algo_df))
 
 neigh = NearestNeighbors(n_neighbors=20)
-neigh.fit(algo_df)
+neigh.fit(scaled_df)
 
 kneighbors = neigh.kneighbors()
 knn_distances = kneighbors[0]
 knn_indices = kneighbors[1]
 
-# Let's build a KNN score for each point by taking the average distance from all its 20 neighbors
 knn_distances = pd.DataFrame(knn_distances)
 knn_distances['knn_score'] = knn_distances.mean(axis=1)
 knn_distances = pd.DataFrame(knn_distances['knn_score'])
 
+scaled_df = scaled_df.join(knn_distances)
+
+# knn_top_anomalies2 = scaled_df.nlargest(20, 'knn_score')
+
 algo_df.reset_index(drop=False,inplace=True)
-algo_df_with_score = algo_df.join(knn_distances)
+scaled_df = scaled_df['knn_score']
 
-# knn_top_anomalies = algo_df_with_score.nlargest(20, 'knn_score')
-
-#### Try the above again but this time scale the dataset
-
-from sklearn.preprocessing import scale
-
-algo_df.set_index('datetime',inplace=True)
-scaled_df = pd.DataFrame(scale(algo_df))
-
-neigh2 = NearestNeighbors(n_neighbors=20)
-neigh2.fit(scaled_df)
-
-kneighbors2 = neigh2.kneighbors()
-knn_distances2 = kneighbors2[0]
-knn_indices2 = kneighbors2[1]
-
-# Let's build a KNN score for each point by taking the average distance from all its 20 neighbors
-knn_distances2 = pd.DataFrame(knn_distances2)
-knn_distances2['knn_score'] = knn_distances2.mean(axis=1)
-knn_distances2 = pd.DataFrame(knn_distances2['knn_score'])
-
-scaled_df = scaled_df.join(knn_distances2)
-
-knn_top_anomalies2 = scaled_df.nlargest(20, 'knn_score')
-
-### Scaling and unscaled generates different results
-
-final_algo_df_with_score = algo_df_with_score.join(scaled_df,rsuffix='_scaled')
+final_algo_df_with_score = algo_df.join(scaled_df)
 
 final_algo_df_with_score['knn_score_rank'] = final_algo_df_with_score['knn_score'].rank(pct=True) * 100
-final_algo_df_with_score['knn_score_scaled_rank'] = final_algo_df_with_score['knn_score_scaled'].rank(pct=True) * 100
+final_algo_df_with_score.drop(columns={'knn_score'},inplace=True)
 
 ### LOF
 from pyod.pyod.models.lof import LOF

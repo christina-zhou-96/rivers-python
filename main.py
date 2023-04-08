@@ -43,53 +43,30 @@ knn_distances = pd.DataFrame(knn_distances['knn_score'])
 
 scaled_df = scaled_df.join(knn_distances)
 
-# knn_top_anomalies2 = scaled_df.nlargest(20, 'knn_score')
-
 algo_df.reset_index(drop=False,inplace=True)
 scaled_df = scaled_df['knn_score']
 
 final_algo_df_with_score = algo_df.join(scaled_df)
 
 final_algo_df_with_score['knn_score_rank'] = final_algo_df_with_score['knn_score'].rank(pct=True) * 100
-final_algo_df_with_score.drop(columns={'knn_score'},inplace=True)
 
-### LOF
+### Let's take local outlier factor (LOF) of each observation
 from pyod.pyod.models.lof import LOF
 
+algo_df.set_index('datetime', inplace=True)
 algo_scaled_df = pd.DataFrame(scale(algo_df))
 
 # Fit
 lof = LOF(n_neighbors=12, metric="manhattan")
 lof.fit(algo_scaled_df)
+
+# Returns a dataset, first column is probability the observation is normal,
+# second column is probability observation is outlier
 probs = lof.predict_proba(algo_scaled_df)
 probs = pd.DataFrame(probs)
 
-lof2 = LOF(n_neighbors=8, metric="manhattan")
-lof2.fit(algo_scaled_df)
-probs2 = lof2.predict_proba(algo_scaled_df)
-probs2 = pd.DataFrame(probs2)
-
-lof_final = probs.join(probs2, rsuffix='_8neighbors')
-# Returns a dataset, first column is probability the observation is normal,
-# second column is probability observation is outlier
-lof_final['outlier_12n'] = lof_final['1'].apply(lambda x: 1 if x > 0.001 else 0)
-lof_final['outlier_8n'] = lof_final['1_8neighbors'].apply(lambda x: 1 if x > 0.001 else 0)
-
-train_df = algo_df.reset_index(drop=False).copy()
-
-lof_final = lof_final.join(train_df)
-lof_final.set_index('datetime',inplace=True)
-
-lof_final.rename(columns={'0':'norm_prob_12n',
-                          '1':'outlier_prob_12n',
-                          '0_8neighbors':'norm_prob_8n',
-                          '1_8neighbors':'outlier_prob_8n'},
-                 inplace=True)
-
-lof_final = lof_final[['norm_prob_8n','outlier_prob_12n','outlier_8n','outlier_12n']]
-
-final_algo_df_with_score.set_index('datetime',inplace=True)
-final_algo_df_with_score = final_algo_df_with_score.join(lof_final)
+final_algo_df_with_score['lof_probs'] = probs[1]
+final_algo_df_with_score['lof_score_rank'] = final_algo_df_with_score['lof_probs'].rank(pct=True) * 100
 
 final_algo_df_with_score.to_excel(r"C:\Users\chris\OneDrive\Documents\python_rivers 04-07-12 1006am.xlsx")
 

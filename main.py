@@ -82,4 +82,5 @@ final_algo_df_with_score['isofor_scores'] = model_IF.decision_function(train_df)
 # inlier: 1, outlier: -1
 final_algo_df_with_score['isofor_anomalies'] = model_IF.predict(train_df)
 
-# TODO: rewrite LOF using sklearn library
+# TODO: rewrite LOF using sklearn library,
+# rename variables, add z-scores, MAD, grubb's test

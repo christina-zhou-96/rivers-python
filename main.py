@@ -68,6 +68,18 @@ probs = pd.DataFrame(probs)
 final_algo_df_with_score['lof_probs'] = probs[1]
 final_algo_df_with_score['lof_score_rank'] = final_algo_df_with_score['lof_probs'].rank(pct=True) * 100
 
-final_algo_df_with_score.to_excel(r"C:\Users\chris\OneDrive\Documents\python_rivers 04-07-12 1006am.xlsx")
+final_algo_df_with_score.to_excel(r"C:\Users\chris\OneDrive\Documents\python_rivers 04-08-23 0624pm.xlsx")
 
+### Let's use isolation forest, which is tree based instead of distance and recursion based
+from sklearn.ensemble import IsolationForest
 
+train_df = algo_df.reset_index(drop=True).copy()
+
+model_IF = IsolationForest(contamination=float(0.1),random_state=42)
+model_IF.fit(train_df)
+
+final_algo_df_with_score['isofor_scores'] = model_IF.decision_function(train_df)
+# inlier: 1, outlier: -1
+final_algo_df_with_score['isofor_anomalies'] = model_IF.predict(train_df)
+
+# TODO: rewrite LOF using sklearn library
